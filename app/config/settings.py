@@ -15,6 +15,7 @@ class Settings:
     SUPABASE_URL: str = _normalize_supabase_url(os.getenv("SUPABASE_URL", ""))
     SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 
     @classmethod
     def validate_supabase(cls) -> None:
@@ -22,6 +23,11 @@ class Settings:
             raise ValueError("SUPABASE_URL is not set in .env")
         if not cls.SUPABASE_KEY:
             raise ValueError("SUPABASE_KEY is not set in .env")
+
+    @classmethod
+    def validate_openai(cls) -> None:
+        if not cls.OPENAI_API_KEY:
+            raise ValueError("OPENAI_API_KEY is not set in .env")
 
 
 settings = Settings()

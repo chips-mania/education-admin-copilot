@@ -131,7 +131,7 @@ STEP 7 Supabase 저장 (documents + chunks + embeddings)
       ↓
 STEP 8 Dense Retrieval  ← 현재
       ↓
-STEP 9 LLM 연결 (예정)
+STEP 9 LLM 연결 (완료)
 ```
 
 ---
@@ -157,4 +157,4 @@ STEP 9 LLM 연결 (예정)
 
 ## 8. 다음 단계
 
-→ **STEP 9**: LLM 연결 (GPT-4.1 Mini, 검색 결과 기반 답변 + 출처)
+→ **STEP 10**: FastAPI `POST /chat` API 구현

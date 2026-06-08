@@ -6,6 +6,7 @@ pytest
 # STEP 10: FastAPI
 fastapi
 uvicorn[standard]
+httpx
 
 # STEP 3: Document parsing
 python-hwpx
@@ -16,3 +17,6 @@ tiktoken
 
 # STEP 6: Embedding
 sentence-transformers
+
+# STEP 9: LLM
+openai
