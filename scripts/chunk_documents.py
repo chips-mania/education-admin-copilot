@@ -27,10 +27,11 @@ def collect_parsed_files(target: Path) -> list[Path]:
 
 
 def chunk_parsed_file(parsed_path: Path) -> Path:
+    parsed_path = parsed_path.resolve()
     parsed = json.loads(parsed_path.read_text(encoding="utf-8"))
     chunks = chunk_document(parsed["content"], metadata=parsed.get("metadata", {}))
 
-    relative = parsed_path.relative_to(PROCESSED_DIR)
+    relative = parsed_path.relative_to(PROCESSED_DIR.resolve())
     output_path = CHUNKS_DIR / relative.with_suffix(".chunks.json")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

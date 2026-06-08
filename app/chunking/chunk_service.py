@@ -14,6 +14,10 @@ ENCODING_NAME = "cl100k_base"
 TABLE_PATTERN = re.compile(r"<table>.*?</table>", re.DOTALL | re.IGNORECASE)
 
 
+def _contains_table(text: str) -> bool:
+    return "<table>" in text.lower()
+
+
 @dataclass
 class Chunk:
     chunk_no: int
@@ -115,8 +119,8 @@ def chunk_document(
                 len(chunks),
                 block_tokens,
             )
-            current_parts = overlap_parts([block])
-            current_tokens = count_tokens("\n\n".join(current_parts), encoding) if current_parts else 0
+            current_parts = []
+            current_tokens = 0
             continue
 
         separator_tokens = count_tokens("\n\n", encoding) if current_parts else 0
@@ -124,7 +128,10 @@ def chunk_document(
 
         if projected_tokens > chunk_size and current_parts:
             flush_chunk()
-            current_parts = overlap_parts([chunks[-1].content]) if chunks else []
+            if chunks and not _contains_table(chunks[-1].content):
+                current_parts = overlap_parts([chunks[-1].content])
+            else:
+                current_parts = []
             current_tokens = count_tokens("\n\n".join(current_parts), encoding) if current_parts else 0
             separator_tokens = count_tokens("\n\n", encoding) if current_parts else 0
             projected_tokens = current_tokens + separator_tokens + block_tokens

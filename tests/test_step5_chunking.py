@@ -43,6 +43,10 @@ def test_chunk_document_keeps_table_intact():
     assert chunks[0].metadata["chapter"] == "제1편 민원정보공개"
     assert chunks[0].metadata["section"] == "민원의 처리"
 
+    if len(chunks) > 1:
+        assert "<table>" not in chunks[1].content.lower()
+        assert "※ 복합민원" in chunks[1].content
+
 
 def test_chunk_output_format():
     parsed = json.loads(SAMPLE_PARSED.read_text(encoding="utf-8"))
