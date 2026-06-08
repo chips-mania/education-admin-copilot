@@ -93,6 +93,19 @@ class DocumentRepository:
         response = self.client.table("chunks").select("id", count="exact").execute()
         return response.count or 0
 
+    def list_documents(self) -> list[dict[str, Any]]:
+        response = (
+            self.client.table("documents")
+            .select("id, title, file_name, file_path, source_type, created_at")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        documents = response.data or []
+        for document in documents:
+            document["chunk_count"] = self.count_chunks_for_document(document["id"])
+        logger.info("Listed %d document(s)", len(documents))
+        return documents
+
     def ingest_embedding_document(self, payload: dict[str, Any], replace: bool = True) -> dict[str, int]:
         file_path = payload["file_path"]
         chunks = payload["chunks"]

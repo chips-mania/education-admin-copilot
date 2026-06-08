@@ -30,3 +30,7 @@ data/evaluation/*.json
 # Model cache
 .cache/
 models/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
