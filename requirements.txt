@@ -15,4 +15,4 @@ PyMuPDF
 tiktoken
 
 # STEP 6: Embedding
-# sentence-transformers  # STEP 6에서 추가
+sentence-transformers

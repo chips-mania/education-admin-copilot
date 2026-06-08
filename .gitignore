@@ -17,6 +17,11 @@ build/
 # Data (processed outputs)
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/**/.gitkeep
+
+# Embedding files (large)
+data/processed/embeddings/**
+!data/processed/embeddings/.gitkeep
 
 # Evaluation results
 data/evaluation/*.json
