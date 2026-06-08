@@ -1,0 +1,18 @@
+# STEP 1: Supabase
+supabase
+python-dotenv
+pytest
+
+# STEP 10: FastAPI
+fastapi
+uvicorn[standard]
+
+# STEP 3: Document parsing
+python-hwpx
+PyMuPDF
+
+# STEP 5: Chunking
+tiktoken
+
+# STEP 6: Embedding
+# sentence-transformers  # STEP 6에서 추가

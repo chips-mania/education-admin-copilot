@@ -91,39 +91,31 @@ Education Administration Copilot은 학교 업무매뉴얼, 교육 관련 법령
 
 ## 시스템 구조
 
+FastAPI가 RAG 파이프라인을 조율하고, Supabase가 문서·벡터 저장 및 검색을 담당합니다.
+
+```text
 사용자 질문
-
-↓
-
-Embedding 생성
-
-↓
-
-Vector Search (pgvector)
-
-↓
-
-관련 업무매뉴얼 검색
-
-↓
-
-관련 법령 검색
-
-↓
-
-관련 행정규칙 검색
-
-↓
-
-관련 해석례 검색
-
-↓
-
-LLM 답변 생성
-
-↓
-
+  ↓
+FastAPI (POST /chat)
+  ↓
+Embedding 생성 (BGE-M3)
+  ↓
+Supabase RPC 검색 (match_documents, pgvector)
+  ↓
+관련 Chunk Top-K 반환
+  ↓
+LLM 답변 생성 (GPT-4.1 Mini)
+  ↓
 답변 + 출처 제공
+```
+
+### 역할 분담
+
+| 구분 | FastAPI | Supabase |
+|------|---------|----------|
+| 역할 | HTTP API, RAG 파이프라인 조율 | 문서·벡터 저장 및 검색 |
+| 저장 | Repository를 통해 Supabase에 위임 | `documents`, `chunks` 테이블 |
+| 검색 | RPC 결과를 LLM에 전달 | `match_documents()` RPC (cosine similarity) |
 
 ---
 
@@ -132,15 +124,16 @@ LLM 답변 생성
 ### Backend
 
 * FastAPI
+* Uvicorn
 
 ### Database
 
-* PostgreSQL
-* pgvector
+* Supabase (관리형 PostgreSQL + pgvector)
+* supabase-py (Supabase Python Client)
 
 ### Embedding Model
 
-* BGE-M3
+* BGE-M3 (1024 dimension)
 
 ### LLM
 
@@ -159,34 +152,28 @@ LLM 답변 생성
 1. HWPX/PDF 문서 수집
 2. 텍스트 추출
 3. 이미지 기반 절차도 OCR 수행
-4. Chunking
-5. Embedding 생성
-6. PostgreSQL(pgvector) 저장
-7. Vector Search 수행
+4. Chunking (700 token / 100 overlap)
+5. Embedding 생성 (BGE-M3)
+6. Supabase 저장 (`documents`, `chunks` + `vector(1024)`)
+7. Supabase RPC 기반 Vector Search (`match_documents`)
 
 ---
 
 ## V1 검색 방식
 
-V1은 가장 단순한 Dense Retrieval 기반 RAG 구조를 사용합니다.
+V1은 Supabase pgvector 기반 Dense Retrieval RAG 구조를 사용합니다.
 
+```text
 질문
-
-↓
-
-Embedding
-
-↓
-
-Vector Search
-
-↓
-
-Top-K 문서 검색
-
-↓
-
+  ↓
+Embedding (BGE-M3)
+  ↓
+Supabase RPC (match_documents, Top-K=5)
+  ↓
+관련 Chunk 검색
+  ↓
 LLM 답변 생성
+```
 
 본 버전은 Retrieval 성능 비교를 위한 Baseline 역할을 수행하며, 이후 Hybrid Search와 Reranker 적용 시 동일한 데이터셋을 기반으로 성능을 비교합니다. Retrieval 품질과 Reranking은 RAG 성능에 큰 영향을 미치는 핵심 요소로 알려져 있습니다.
 
