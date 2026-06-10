@@ -3,7 +3,14 @@ import logging
 import re
 from pathlib import Path
 
-from app.chunking import chunk_document, split_into_atomic_blocks
+from app.chunking import (
+    MAX_EMBEDDABLE_TOKENS,
+    Chunk,
+    chunk_document,
+    count_tokens,
+    filter_embeddable_chunks,
+    split_into_atomic_blocks,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,6 +53,26 @@ def test_chunk_document_keeps_table_intact():
     if len(chunks) > 1:
         assert "<table>" not in chunks[1].content.lower()
         assert "※ 복합민원" in chunks[1].content
+
+
+def test_filter_embeddable_chunks_skips_oversized_chunks():
+    small_text = "민원의 종류에 대한 짧은 설명"
+    huge_text = "민원 " * 20000
+    assert count_tokens(huge_text) > MAX_EMBEDDABLE_TOKENS
+
+    chunks = [
+        Chunk(chunk_no=1, content=small_text, metadata={"title": "테스트"}),
+        Chunk(chunk_no=2, content=huge_text, metadata={"title": "테스트"}),
+        Chunk(chunk_no=3, content="복합민원 안내", metadata={"title": "테스트"}),
+    ]
+
+    filtered = filter_embeddable_chunks(chunks)
+
+    assert len(filtered) == 2
+    assert filtered[0].chunk_no == 1
+    assert filtered[1].chunk_no == 2
+    assert filtered[0].content == small_text
+    assert filtered[1].content == "복합민원 안내"
 
 
 def test_chunk_output_format():

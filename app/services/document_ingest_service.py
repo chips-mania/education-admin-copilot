@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from app.chunking import chunk_document
+from app.chunking import MAX_EMBEDDABLE_TOKENS, chunk_document, filter_embeddable_chunks
 from app.config.settings import BASE_DIR
 from app.db.repositories import DocumentRepository
 from app.parsers import parse_document
@@ -39,6 +39,13 @@ class DocumentIngestService:
 
         parsed = parse_document(file_path, project_root=self.project_root).to_dict()
         chunks = chunk_document(parsed["content"], metadata=parsed.get("metadata", {}))
+        chunks = filter_embeddable_chunks(chunks)
+        if not chunks:
+            raise ValueError(
+                f"No embeddable chunks remain after filtering (>{MAX_EMBEDDABLE_TOKENS} tokens). "
+                "All chunks exceeded the token limit."
+            )
+
         chunk_dicts = [chunk.to_dict() for chunk in chunks]
 
         vectors = embed_texts([chunk["content"] for chunk in chunk_dicts])

@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT_DIR))
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+from app.chunking import filter_embeddable_chunk_dicts
 from app.services.embedding_service import embed_texts
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -34,6 +35,11 @@ def build_embeddings_for_file(chunks_path: Path) -> Path:
     if not chunks:
         raise ValueError(f"No chunks found in: {chunks_path}")
 
+    chunks = filter_embeddable_chunk_dicts(chunks)
+    if not chunks:
+        raise ValueError(f"No embeddable chunks remain after filtering in: {chunks_path}")
+
+    payload["chunks"] = chunks
     texts = [chunk["content"] for chunk in chunks]
     vectors = embed_texts(texts)
 

@@ -32,6 +32,7 @@ export async function uploadDocument(
 
   const response = await api.post<DocumentUploadResponse>('/documents/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 0,
   })
   return response.data
 }

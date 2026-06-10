@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 700
 CHUNK_OVERLAP = 100
+MAX_EMBEDDABLE_TOKENS = 10000
 ENCODING_NAME = "cl100k_base"
 
 TABLE_PATTERN = re.compile(r"<table>.*?</table>", re.DOTALL | re.IGNORECASE)
@@ -31,6 +32,70 @@ class Chunk:
 def count_tokens(text: str, encoding: tiktoken.Encoding | None = None) -> int:
     enc = encoding or tiktoken.get_encoding(ENCODING_NAME)
     return len(enc.encode(text))
+
+
+def filter_embeddable_chunks(chunks: list[Chunk]) -> list[Chunk]:
+    encoding = tiktoken.get_encoding(ENCODING_NAME)
+    kept: list[Chunk] = []
+
+    for chunk in chunks:
+        token_count = count_tokens(chunk.content, encoding)
+        if token_count > MAX_EMBEDDABLE_TOKENS:
+            logger.warning(
+                "Skipping chunk %d (%d tokens > %d limit)",
+                chunk.chunk_no,
+                token_count,
+                MAX_EMBEDDABLE_TOKENS,
+            )
+            continue
+
+        kept.append(
+            Chunk(
+                chunk_no=len(kept) + 1,
+                content=chunk.content,
+                metadata=dict(chunk.metadata),
+            )
+        )
+
+    skipped = len(chunks) - len(kept)
+    if skipped:
+        logger.info(
+            "Filtered chunks: kept %d, skipped %d (>%d tokens)",
+            len(kept),
+            skipped,
+            MAX_EMBEDDABLE_TOKENS,
+        )
+
+    return kept
+
+
+def filter_embeddable_chunk_dicts(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    encoding = tiktoken.get_encoding(ENCODING_NAME)
+    kept: list[dict[str, Any]] = []
+
+    for chunk in chunks:
+        token_count = count_tokens(chunk["content"], encoding)
+        if token_count > MAX_EMBEDDABLE_TOKENS:
+            logger.warning(
+                "Skipping chunk %d (%d tokens > %d limit)",
+                chunk.get("chunk_no"),
+                token_count,
+                MAX_EMBEDDABLE_TOKENS,
+            )
+            continue
+
+        kept.append({**chunk, "chunk_no": len(kept) + 1})
+
+    skipped = len(chunks) - len(kept)
+    if skipped:
+        logger.info(
+            "Filtered chunks: kept %d, skipped %d (>%d tokens)",
+            len(kept),
+            skipped,
+            MAX_EMBEDDABLE_TOKENS,
+        )
+
+    return kept
 
 
 def split_into_atomic_blocks(content: str) -> list[str]:
