@@ -44,7 +44,11 @@ def build_embeddings_for_file(chunks_path: Path) -> Path:
     vectors = embed_texts(texts)
 
     for chunk, vector in zip(chunks, vectors):
-        chunk["embedding"] = vector
+        metadata = chunk.get("metadata") or {}
+        chunk.setdefault("chapter", metadata.get("chapter", ""))
+        chunk.setdefault("heading", metadata.get("section") or metadata.get("heading", ""))
+        chunk["embedding_v1"] = vector
+        chunk["embedding_v2"] = vector
 
     relative = chunks_path.relative_to(CHUNKS_DIR.resolve())
     output_name = relative.name.replace(".chunks.json", ".embeddings.json")
@@ -81,7 +85,7 @@ def main() -> None:
         summary = {
             "title": result.get("title"),
             "chunk_count": len(result.get("chunks", [])),
-            "embedding_dim": len(result["chunks"][0]["embedding"]) if result.get("chunks") else 0,
+            "embedding_dim": len(result["chunks"][0]["embedding_v2"]) if result.get("chunks") else 0,
             "output": str(output_path.relative_to(ROOT_DIR)),
         }
         print(json.dumps(summary, ensure_ascii=False, indent=2))

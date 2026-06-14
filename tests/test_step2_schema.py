@@ -23,7 +23,10 @@ def test_chunks_table_exists():
     client = get_supabase_client()
     response = (
         client.table("chunks")
-        .select("id, document_id, chunk_no, content, source_type, metadata", count="exact")
+        .select(
+            "id, document_id, chunk_no, chapter, heading, content, source_type, metadata",
+            count="exact",
+        )
         .limit(1)
         .execute()
     )
@@ -35,15 +38,13 @@ def test_chunks_table_exists():
 def test_match_documents_rpc_exists():
     client = get_supabase_client()
     zero_vector = [0.0] * 1024
+    params = {
+        "query_embedding": zero_vector,
+        "match_count": 5,
+        "match_threshold": 0.5,
+    }
 
-    response = client.rpc(
-        "match_documents",
-        {
-            "query_embedding": zero_vector,
-            "match_count": 5,
-            "match_threshold": 0.5,
-        },
-    ).execute()
-
-    logger.info("match_documents RPC OK, results=%s", len(response.data))
-    assert isinstance(response.data, list)
+    for rpc_name in ("match_documents_v1", "match_documents_v2", "match_documents"):
+        response = client.rpc(rpc_name, params).execute()
+        logger.info("%s RPC OK, results=%s", rpc_name, len(response.data))
+        assert isinstance(response.data, list)

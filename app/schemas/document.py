@@ -10,6 +10,7 @@ SOURCE_TYPES = ("manual", "law", "regulation", "interpretation")
 
 FOLDER_SOURCE_TYPE = {
     "manuals": "manual",
+    "manuals_exp": "manual",
     "laws": "law",
     "regulations": "regulation",
     "interpretations": "interpretation",

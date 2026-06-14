@@ -1,5 +1,4 @@
 import logging
-from functools import lru_cache
 
 from fastapi import APIRouter, Depends
 
@@ -11,18 +10,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["chat"])
 
 
-@lru_cache
 def get_rag_service() -> RagService:
     return RagService()
 
 
 @router.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest, service: RagService = Depends(get_rag_service)) -> ChatResponse:
-    logger.info("POST /chat question=%s", request.question)
-    response = service.ask(request.question)
+    logger.info("POST /chat question=%s embed_version=%s", request.question, request.embed_version)
+    response = service.ask(request.question, embed_version=request.embed_version)
 
     return ChatResponse(
         answer=response.answer,
+        embed_version=response.embed_version,
         sources=[
             SourceResponse(
                 file_name=source.file_name,

@@ -46,11 +46,24 @@ class DocumentIngestService:
                 "All chunks exceeded the token limit."
             )
 
-        chunk_dicts = [chunk.to_dict() for chunk in chunks]
+        chunk_dicts = []
+        for chunk in chunks:
+            payload = chunk.to_dict()
+            metadata = payload.get("metadata") or {}
+            chunk_dicts.append(
+                {
+                    "chunk_no": payload["chunk_no"],
+                    "chapter": metadata.get("chapter", ""),
+                    "heading": metadata.get("section") or metadata.get("heading", ""),
+                    "content": payload["content"],
+                    "metadata": metadata,
+                }
+            )
 
         vectors = embed_texts([chunk["content"] for chunk in chunk_dicts])
         for chunk, vector in zip(chunk_dicts, vectors):
-            chunk["embedding"] = vector
+            chunk["embedding_v1"] = vector
+            chunk["embedding_v2"] = vector
 
         payload = {
             "title": parsed["title"],

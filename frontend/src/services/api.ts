@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-import type { ChatResponse } from '../types/chat'
+import type { ChatResponse, EmbedVersion } from '../types/chat'
 import type { DocumentListResponse, DocumentUploadResponse, SourceType } from '../types/document'
 
 const baseURL = import.meta.env.VITE_API_URL ?? ''
@@ -17,8 +17,14 @@ export async function fetchDocuments(): Promise<DocumentListResponse> {
   return response.data
 }
 
-export async function sendChat(question: string): Promise<ChatResponse> {
-  const response = await api.post<ChatResponse>('/chat', { question })
+export async function sendChat(
+  question: string,
+  embedVersion: EmbedVersion = 'v2',
+): Promise<ChatResponse> {
+  const response = await api.post<ChatResponse>('/chat', {
+    question,
+    embed_version: embedVersion,
+  })
   return response.data
 }
 

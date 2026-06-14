@@ -34,7 +34,7 @@ def test_chunks_exist_in_supabase_after_ingest():
     result = repository.ingest_embedding_document(payload, replace=True)
     response = (
         repository.client.table("chunks")
-        .select("id, chunk_no, document_id, metadata", count="exact")
+        .select("id, chunk_no, document_id, chapter, heading, metadata", count="exact")
         .eq("document_id", result["document_id"])
         .order("chunk_no")
         .execute()
@@ -42,4 +42,6 @@ def test_chunks_exist_in_supabase_after_ingest():
 
     logger.info("stored_chunks=%s", response.count)
     assert response.count == len(payload["chunks"])
-    assert response.data[0]["metadata"]["chapter"] == "제1편 민원정보공개"
+    first = response.data[0]
+    chapter = first.get("chapter") or (first.get("metadata") or {}).get("chapter")
+    assert chapter == "제1편 민원정보공개"

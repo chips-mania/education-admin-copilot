@@ -27,16 +27,19 @@ def _sample_result(chunk_no: int = 1, similarity: float = 0.62) -> RetrievalResu
         document_title="민원의 종류",
         file_name=SAMPLE_FILE_NAME,
         file_path=f"data/raw/manuals/{SAMPLE_FILE_NAME}",
+        chapter="제1편 민원정보공개",
+        heading="민원의 처리",
     )
 
 
-def test_build_context_includes_source_metadata():
+def test_build_context_uses_unified_prompt_format():
     context = build_context([_sample_result()])
 
-    assert SAMPLE_FILE_NAME in context
+    assert "민원의 종류" in context
     assert "제1편 민원정보공개" in context
     assert "민원의 처리" in context
     assert "법정민원" in context
+    assert SAMPLE_FILE_NAME not in context
 
 
 def test_build_sources_maps_retrieval_fields():
@@ -84,5 +87,5 @@ def test_rag_service_answers_relevant_question():
     assert response.query == "민원 종류 알려줘"
     assert response.answer.strip()
     assert len(response.sources) >= 1
-    assert response.sources[0].file_name == SAMPLE_FILE_NAME
+    assert response.sources[0].file_name.endswith(".hwpx")
     assert any(keyword in response.answer for keyword in ("민원", "법정", "고충"))

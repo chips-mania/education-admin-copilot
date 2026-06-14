@@ -70,18 +70,35 @@ def filter_embeddable_chunks(chunks: list[Chunk]) -> list[Chunk]:
 
 
 def filter_embeddable_chunk_dicts(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    from app.chunking.embed_versions import build_embed_text_v1, build_embed_text_v2_from_chunk
+
     encoding = tiktoken.get_encoding(ENCODING_NAME)
     kept: list[dict[str, Any]] = []
 
     for chunk in chunks:
-        token_count = count_tokens(chunk["content"], encoding)
-        if token_count > MAX_EMBEDDABLE_TOKENS:
-            logger.warning(
-                "Skipping chunk %d (%d tokens > %d limit)",
-                chunk.get("chunk_no"),
-                token_count,
-                MAX_EMBEDDABLE_TOKENS,
-            )
+        content = chunk.get("content")
+        if content is None:
+            continue
+
+        texts_to_check = [build_embed_text_v1(str(content))]
+        v2_text = build_embed_text_v2_from_chunk(chunk)
+        if v2_text and v2_text != texts_to_check[0]:
+            texts_to_check.append(v2_text)
+
+        over_limit = False
+        for text in texts_to_check:
+            token_count = count_tokens(text, encoding)
+            if token_count > MAX_EMBEDDABLE_TOKENS:
+                logger.warning(
+                    "Skipping chunk %d (%d tokens > %d limit)",
+                    chunk.get("chunk_no"),
+                    token_count,
+                    MAX_EMBEDDABLE_TOKENS,
+                )
+                over_limit = True
+                break
+
+        if over_limit:
             continue
 
         kept.append({**chunk, "chunk_no": len(kept) + 1})

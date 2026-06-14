@@ -1,6 +1,7 @@
 from app.services.embedding_service import (
     EMBEDDING_DIM,
     MODEL_NAME,
+    attach_dual_embeddings,
     embed_query,
     embed_text,
     embed_texts,
@@ -19,6 +20,7 @@ __all__ = [
     "RetrievalResult",
     "RetrievalService",
     "Source",
+    "attach_dual_embeddings",
     "embed_query",
     "embed_text",
     "embed_texts",

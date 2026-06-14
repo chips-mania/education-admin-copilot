@@ -26,6 +26,17 @@ class DocumentRepository:
         logger.info("Deleting document id=%s", document_id)
         self.client.table("documents").delete().eq("id", document_id).execute()
 
+    def list_document_ids(self) -> list[int]:
+        response = self.client.table("documents").select("id").execute()
+        return [row["id"] for row in (response.data or [])]
+
+    def delete_all_documents(self) -> int:
+        document_ids = self.list_document_ids()
+        for document_id in document_ids:
+            self.delete_document(document_id)
+        logger.info("Deleted %d document(s) from Supabase", len(document_ids))
+        return len(document_ids)
+
     def insert_document(
         self,
         title: str,
@@ -49,6 +60,27 @@ class DocumentRepository:
         logger.info("Inserted document id=%s", document_id)
         return document_id
 
+    @staticmethod
+    def _resolve_chunk_fields(chunk: dict[str, Any]) -> tuple[str, str, str, str, list[float], list[float]]:
+        content = chunk.get("content")
+        embedding_v1 = chunk.get("embedding_v1")
+        embedding_v2 = chunk.get("embedding_v2")
+
+        if content is None:
+            raise ValueError(f"Chunk {chunk.get('chunk_no')} missing content")
+        if embedding_v1 is None or embedding_v2 is None:
+            raise ValueError(f"Chunk {chunk.get('chunk_no')} missing embedding_v1/embedding_v2")
+
+        metadata = chunk.get("metadata") or {}
+        return (
+            str(chunk.get("chapter") or metadata.get("chapter") or ""),
+            str(chunk.get("heading") or metadata.get("heading") or metadata.get("section") or ""),
+            str(content),
+            chunk.get("source_type") or "",
+            embedding_v1,
+            embedding_v2,
+        )
+
     def insert_chunks(
         self,
         document_id: int,
@@ -57,17 +89,19 @@ class DocumentRepository:
     ) -> int:
         rows = []
         for chunk in chunks:
-            if "embedding" not in chunk:
-                raise ValueError(f"Chunk {chunk.get('chunk_no')} missing embedding")
+            chapter, heading, content, _, embedding_v1, embedding_v2 = self._resolve_chunk_fields(chunk)
 
             rows.append(
                 {
                     "document_id": document_id,
                     "chunk_no": chunk["chunk_no"],
-                    "content": chunk["content"],
+                    "chapter": chapter,
+                    "heading": heading,
+                    "content": content,
                     "source_type": source_type,
                     "metadata": chunk.get("metadata", {}),
-                    "embedding": chunk["embedding"],
+                    "embedding_v1": embedding_v1,
+                    "embedding_v2": embedding_v2,
                 }
             )
 

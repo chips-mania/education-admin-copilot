@@ -33,6 +33,7 @@ def test_chat_with_mock_rag_service():
     mock_service.ask.return_value = RagResponse(
         query="민원 종류 알려줘",
         answer="민원은 일반민원과 고충민원으로 구분됩니다.",
+        embed_version="v2",
         sources=[
             Source(
                 file_name=SAMPLE_FILE_NAME,
@@ -59,7 +60,34 @@ def test_chat_with_mock_rag_service():
     assert "민원" in payload["answer"]
     assert len(payload["sources"]) == 1
     assert payload["sources"][0]["file_name"] == SAMPLE_FILE_NAME
-    mock_service.ask.assert_called_once_with("민원 종류 알려줘")
+    mock_service.ask.assert_called_once_with("민원 종류 알려줘", embed_version="v2")
+
+
+def test_chat_with_embed_version_v1():
+    mock_service = MagicMock()
+    mock_service.ask.return_value = RagResponse(
+        query="민원인이 될 수 없는 경우",
+        answer="행정기관은 민원인이 될 수 없습니다.",
+        embed_version="v1",
+        sources=[],
+    )
+
+    app.dependency_overrides[get_rag_service] = lambda: mock_service
+    try:
+        client = TestClient(app)
+        response = client.post(
+            "/chat",
+            json={"question": "민원인이 될 수 없는 경우", "embed_version": "v1"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    assert response.json()["embed_version"] == "v1"
+    mock_service.ask.assert_called_once_with(
+        "민원인이 될 수 없는 경우",
+        embed_version="v1",
+    )
 
 
 def test_chat_endpoint_returns_answer():
@@ -72,5 +100,6 @@ def test_chat_endpoint_returns_answer():
     payload = response.json()
     assert payload["answer"].strip()
     assert len(payload["sources"]) >= 1
-    assert payload["sources"][0]["file_name"] == SAMPLE_FILE_NAME
+    assert payload["sources"][0]["file_name"].endswith(".hwpx")
+    assert payload["embed_version"] == "v2"
     assert any(keyword in payload["answer"] for keyword in ("민원", "법정", "고충"))

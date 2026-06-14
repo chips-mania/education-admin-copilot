@@ -22,20 +22,15 @@ def build_context(results: list[RetrievalResult]) -> str:
     sections: list[str] = []
     for index, result in enumerate(results, start=1):
         metadata = result.metadata or {}
-        chapter = metadata.get("chapter", "")
-        section = metadata.get("section", "")
-        location = " > ".join(part for part in [chapter, section] if part)
+        chapter = result.chapter or metadata.get("chapter", "")
+        heading = result.heading or metadata.get("heading") or metadata.get("section", "")
+        location = " > ".join(part for part in (chapter, heading) if part)
 
-        header = (
-            f"[출처 {index}] "
-            f"파일: {result.file_name} | "
-            f"제목: {result.document_title} | "
-            f"chunk: {result.chunk_no}"
-        )
+        header = f"[출처 {index}]\n{result.document_title}"
         if location:
-            header += f" | 위치: {location}"
+            header += f"\n{location}"
 
-        sections.append(f"{header}\n내용:\n{result.content}")
+        sections.append(f"{header}\n\n{result.content}")
 
     return "\n\n".join(sections)
 

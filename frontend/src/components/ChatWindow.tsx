@@ -3,9 +3,22 @@ import type { FormEvent } from 'react'
 
 import { getErrorMessage } from '../lib/errors'
 import { sendChat } from '../services/api'
-import type { ChatMessage } from '../types/chat'
+import type { ChatMessage, EmbedVersion } from '../types/chat'
 import { ChatMessage as ChatMessageItem } from './ChatMessage'
 import { LoadingSpinner } from './LoadingSpinner'
+
+const EMBED_OPTIONS: { value: EmbedVersion; label: string; description: string }[] = [
+  {
+    value: 'v1',
+    label: 'Prototype',
+    description: '본문만 임베딩 (embedding_v1)',
+  },
+  {
+    value: 'v2',
+    label: 'Contextual Retrieval',
+    description: '맥락+본문 임베딩 (embedding_v2)',
+  },
+]
 
 function createId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
@@ -20,6 +33,7 @@ export function ChatWindow() {
     },
   ])
   const [input, setInput] = useState('')
+  const [embedVersion, setEmbedVersion] = useState<EmbedVersion>('v2')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,7 +54,7 @@ export function ChatWindow() {
     setError(null)
 
     try {
-      const response = await sendChat(question)
+      const response = await sendChat(question, embedVersion)
       setMessages((prev) => [
         ...prev,
         {
@@ -71,6 +85,27 @@ export function ChatWindow() {
         onSubmit={(event) => void handleSubmit(event)}
         className="border-t border-slate-200 bg-white px-6 py-4"
       >
+        <div className="mb-3 flex flex-wrap gap-2">
+          {EMBED_OPTIONS.map((option) => {
+            const selected = embedVersion === option.value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                disabled={loading}
+                onClick={() => setEmbedVersion(option.value)}
+                className={`rounded-lg border px-3 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  selected
+                    ? 'border-blue-600 bg-blue-50 text-blue-900'
+                    : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+                }`}
+              >
+                <span className="block text-sm font-semibold">{option.label}</span>
+                <span className="block text-xs text-slate-500">{option.description}</span>
+              </button>
+            )
+          })}
+        </div>
         <div className="flex gap-3">
           <textarea
             value={input}

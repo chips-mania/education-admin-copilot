@@ -20,9 +20,19 @@ def main() -> None:
     parser.add_argument("question", help="Search query")
     parser.add_argument("--top-k", type=int, default=5)
     parser.add_argument("--threshold", type=float, default=0.5)
+    parser.add_argument(
+        "--embed-version",
+        choices=("v1", "v2"),
+        default=None,
+        help="Search embedding column (default: RETRIEVAL_EMBED_VERSION or v2)",
+    )
     args = parser.parse_args()
 
-    service = RetrievalService(match_count=args.top_k, match_threshold=args.threshold)
+    service = RetrievalService(
+        match_count=args.top_k,
+        match_threshold=args.threshold,
+        embed_version=args.embed_version,
+    )
     response = service.search(args.question)
     print(json.dumps(response.to_dict(), ensure_ascii=False, indent=2))
 

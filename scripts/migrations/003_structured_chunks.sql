@@ -1,50 +1,36 @@
--- STEP 2: Supabase SQL Editor에서 실행
+-- Structured chunks: chapter/heading/content columns + split RPCs
+-- Fresh install: use setup_schema.sql instead.
 
+alter table chunks add column if not exists chapter text not null default '';
+alter table chunks add column if not exists heading text not null default '';
 
-create extension if not exists vector;
+-- Migrate chapter/heading from metadata when present
+update chunks
+set chapter = coalesce(nullif(chapter, ''), metadata->>'chapter', ''),
+    heading = coalesce(nullif(heading, ''), metadata->>'heading', '')
+where metadata ? 'chapter' or metadata ? 'heading';
 
-create table documents (
-    id bigint generated always as identity primary key,
-    title text not null,
-    source_type text not null,
-    file_name text not null,
-    file_path text not null,
-    created_at timestamptz default now(),
+-- Normalize content from content_v1 or legacy fields
+alter table chunks add column if not exists content text;
+update chunks
+set content = coalesce(
+    nullif(content, ''),
+    content_v1,
+    metadata->>'body',
+    content_v2,
+    ''
+)
+where content is null or content = '';
 
-    constraint documents_source_type_check check (
-        source_type in ('manual', 'law', 'regulation', 'interpretation')
-    )
-);
+alter table chunks alter column content set not null;
 
-create table chunks (
-    id bigint generated always as identity primary key,
-    document_id bigint not null references documents(id) on delete cascade,
-    chunk_no integer not null,
-    chapter text not null default '',
-    heading text not null default '',
-    content text not null,
-    source_type text not null,
-    metadata jsonb default '{}'::jsonb,
-    embedding_v1 vector(1024),
-    embedding_v2 vector(1024),
+alter table chunks drop column if exists content_v1;
+alter table chunks drop column if exists content_v2;
+alter table chunks drop column if exists embedding;
+drop index if exists chunks_embedding_idx;
 
-    constraint chunks_source_type_check check (
-        source_type in ('manual', 'law', 'regulation', 'interpretation')
-    )
-);
-
-create index chunks_embedding_v1_idx
-    on chunks using hnsw (embedding_v1 vector_cosine_ops);
-
-create index chunks_embedding_v2_idx
-    on chunks using hnsw (embedding_v2 vector_cosine_ops);
-
-create index chunks_chapter_idx on chunks (chapter);
-
-create index chunks_heading_idx on chunks (heading);
-
-create index chunks_metadata_idx
-    on chunks using gin (metadata);
+create index if not exists chunks_chapter_idx on chunks (chapter);
+create index if not exists chunks_heading_idx on chunks (heading);
 
 create or replace function match_documents_v1(
     query_embedding vector(1024),
@@ -130,7 +116,6 @@ as $$
     limit match_count;
 $$;
 
--- Backward-compatible wrapper (defaults to V2)
 create or replace function match_documents(
     query_embedding vector(1024),
     match_count int default 5,
