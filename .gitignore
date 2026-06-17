@@ -26,6 +26,7 @@ data/processed/embeddings/**
 # Evaluation results
 data/evaluation/*.json
 !data/evaluation/.gitkeep
+!data/evaluation/golden_dataset.json
 
 # Model cache
 .cache/

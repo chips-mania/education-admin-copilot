@@ -8,7 +8,7 @@ export function SourceCard({ source }: SourceCardProps) {
   const location = [source.chapter, source.section].filter(Boolean).join(' > ')
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-base text-slate-700">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[17px] text-slate-700">
       <p className="font-medium text-slate-900">
         {source.document_title}
         <span className="ml-2 font-normal text-slate-500">청크 {source.chunk_no}</span>

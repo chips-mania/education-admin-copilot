@@ -29,13 +29,12 @@ export function HomePage() {
   }, [loadDocuments])
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b border-slate-200 bg-white px-6 py-4">
-        <h1 className="text-2xl font-semibold text-slate-900">Education Administration Copilot</h1>
-        <p className="mt-1 text-lg text-slate-500">교육행정 RAG 업무지원 시스템</p>
+    <div className="flex h-screen flex-col overflow-hidden bg-white">
+      <header className="flex shrink-0 min-h-[4.5rem] items-center bg-[#1B2B44] px-8 py-6">
+        <h1 className="text-2xl font-semibold text-white">교육행정업무 AI Copilot</h1>
       </header>
 
-      <div className="grid min-h-0 flex-1 lg:grid-cols-[320px_1fr]">
+      <div className="grid min-h-0 flex-1 overflow-hidden lg:grid-cols-[320px_1fr]">
         <KnowledgeBasePanel
           data={documents}
           loading={loading}

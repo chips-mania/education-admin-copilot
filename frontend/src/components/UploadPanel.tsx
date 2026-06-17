@@ -119,7 +119,7 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-900">공문 업로드</h3>
+      <h3 className="text-lg font-semibold text-slate-900">문서 업로드</h3>
       <p className="mt-1 text-base text-slate-500">PDF / HWPX · 여러 파일 선택 가능</p>
       <input
         ref={inputRef}

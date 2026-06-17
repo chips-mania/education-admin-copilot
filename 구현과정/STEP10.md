@@ -2,7 +2,7 @@
 
 > 상태: **완료**  
 > 완료일: 2026-06-08  
-> 테스트: `tests/test_step10_api.py` — **4/4 PASSED**
+> 테스트: `tests/test_step10_api.py` — **5/5 PASSED**
 
 ---
 
@@ -116,11 +116,17 @@ print(response.json()["answer"])
 ## 4. 파이프라인 위치
 
 ```text
-STEP 9 LLM 연결
+STEP 9  LLM 연결
       ↓
-STEP 10 FastAPI /chat  ← 현재
+STEP 10 FastAPI /chat
       ↓
-STEP 11 평가셋 구축 (예정)
+STEP 11 Documents API
+      ↓
+STEP 12 Frontend MVP
+      ↓
+STEP 13 Contextual Retrieval (V1/V2)
+      ↓
+STEP 14 Golden Dataset + Recall 평가  ← 현재
 ```
 
 ---
@@ -131,7 +137,7 @@ STEP 11 평가셋 구축 (예정)
 - [x] `GET /health` 정상 응답
 - [x] `POST /chat` 정상 응답
 - [x] answer + sources 반환
-- [x] 테스트 4건 통과
+- [x] 테스트 5건 통과
 
 ---
 
@@ -145,4 +151,4 @@ STEP 11 평가셋 구축 (예정)
 
 ## 7. 다음 단계
 
-→ **STEP 11**: 평가셋 구축
+→ **STEP 11**: Documents API (KB 목록·업로드)
